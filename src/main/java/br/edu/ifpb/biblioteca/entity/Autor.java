@@ -34,7 +34,7 @@ public class Autor {
     @Enumerated(EnumType.STRING)
     private Genero genero;
 
-    @OneToMany(mappedBy = "autor", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "autor", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private List<Livro> livros = new ArrayList<>();
 

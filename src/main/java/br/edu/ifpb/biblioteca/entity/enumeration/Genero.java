@@ -20,6 +20,10 @@ public enum Genero {
         if (tipo == null) {
             return null;
         }
+//        for (Genero genero : values()) {
+//            if (genero.getTipo() == tipo) return genero;
+//        }
+//        throw new RuntimeException();
         Optional<Genero> genero = Arrays.stream(values()).filter(g -> g.getTipo().equals(tipo)).findFirst();
         return genero.orElseThrow(RuntimeException::new);
     }

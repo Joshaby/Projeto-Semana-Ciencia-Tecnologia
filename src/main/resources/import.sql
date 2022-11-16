@@ -1,0 +1,5 @@
+INSERT INTO autor(nome, sobrenome, data_nascimento, email, genero) VALUES ('Matt', 'Smith', '1982-11-01', 'jose.azevedo@academico.ifpb.edu.br', 'MASCULINO');
+INSERT INTO autor(nome, sobrenome, data_nascimento, email, genero) VALUES ('David', 'Tennant', '1982-11-01', 'josehenriquebrito55@gmail.com', 'MASCULINO');
+
+INSERT INTO livro(nome, publicacao, descricao, autor_id) VALUES ('Doctor Who: Lobo mal', '2022-01-12', 'Lorem ipsum dolor sit amet. Et architecto deleniti sed dicta quas et voluptatem quam. Sed corrupti dolorem ea obcaecati aperiam et doloribus quos ut molestias dolores. Ut obcaecati similique est neque consequatur ut exercitationem ratione sit odio nesciunt.', 1);
+INSERT INTO livro(nome, publicacao, descricao, autor_id) VALUES ('Doctor Who: O fim dos tempos', '2022-01-13', 'Lorem ipsum dolor sit amet. Ut ipsum ratione quo itaque deserunt et cumque delectus 33 autem quas et perspiciatis assumenda. Ut aliquam mollitia 33 quia provident et magnam earum 33 nesciunt nostrum et velit consectetur aut galisum dolore qui sunt asperiores. At iste magnam aut modi doloribus sed expedita pariatur. Aut deleniti sint ex voluptas velit sit incidunt expedita.', 2);

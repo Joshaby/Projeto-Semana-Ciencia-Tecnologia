@@ -6,13 +6,11 @@ Criação de uma API REST de uma biblioteca!
 
 Após feito a configuração do inicial projeto, é hora de programar! Siga os passos abaixo de acordo com o deseronlar do curso.
 
-### Passo 1: Criação das entidades
+### Passo 1: Criação da camada das entidades
 
-Primeiramente, vamos criar as classes que iriam ser nossas entidades de banco(lembrando que elas ficaram na pasta entity). Também precisamos criar um enum(usado para um conter um grupo de constantes), que será usado como gênero no Autor. O enum ficará na pasta enumeration, dentro de entity. Abaixo, segue as classes e o enum:
+Primeiramente, vamos criar as classes que iriam ser nossas entidades de banco, que ficaram na pasta entity. Também precisamos criar um enum(usado para um conter um grupo de constantes), que será usado como gênero no Autor. O enum ficará na pasta enumeration, dentro de entity. Abaixo, segue as classes e o enum:
 
 ```java
-// Livro
-
 public class Livro {
 
     private String nome;
@@ -51,8 +49,6 @@ public enum Genero {
 ```
 
 ```java
-// Autor
-
 public class Autor {
 
     private String nome;
@@ -71,8 +67,6 @@ Para que essas classes sejam entidades de banco, precisamos "anotar-lá" com __@
 
 Um livro poderá ter uma descrição muito grande por exemplo, e sem anotação __@Length(max = 9999)__ no atributo descrição, teriamos um exceção que indica que estrapolamos o tamanho padrão da descrição no banco
 ```java
-// Livro
-
 @Entity
 public class Livro {
     
@@ -91,8 +85,6 @@ public class Livro {
 
 Em Autor, no genero, precisamos por a anotação @Enumerated(EnumType.STRING), para indicarmos ao Spring Data que sera usado a String do nome do gênero, que são MASCULINO, FEMININO ou OUTRO
 ```java
-// Autor
-
 @Entity
 public class Autor {
     
@@ -140,8 +132,6 @@ Nesse arquivo configuramos o dialéto SQL aceito pelo SGBD, url de acesso, usuá
 Agora precisamos criar o relacionamento entre Livro e Autor. A relação entre Livro e Autor é de muitos para um, isso quer dizer que vários livros podem ser feitos por um autor, apenas um, ou, que um autor faz vários livros. Se você estudou bando de dados bem, saberá que nesse relacionamento, colocamos a referência do "um" nos "muitos", que nesse caso será a referência do autor nos Livros. Fazemos isso da seguinte maneira: colocamos um atributo autor do tipo Autor em Livro e anotamos com __@ManyToOne__, e logo abaixo dessa anotação colocamos __@JoinColumn(name = "autor_id")__. Essas duas anotaçãos formam o relacionamento de muitos para um entre livro e autor, e criará uma coluna com o nome autor_id na relação do Livro no banco, ou seja, estamos transformando uma referência de um objeto em uma foreign key na relação. Segue as classes atualizadas:
 
 ```java
-// Livro
-
 @Entity
 public class Livro {
     
@@ -163,8 +153,6 @@ public class Livro {
 ```
 
 ```java
-// Autor
-
 @Entity
 public class Autor {
     
@@ -187,8 +175,6 @@ public class Autor {
 
 Ainda nessa parte de relacionamento, podemos ter referências dos Livros em um Autor, e isso só faz sentido no mundo orientado a objetos. Precisamos fazer isso pelo seguinte motivo: caso queiramos remover um Autor, os seus Livros precisam ser removidos. Fazemos isso colocando um List de Livro no Autor, e em cima desse atributo, colocamos a anotação __@OneToMany(mappedBy = "autor", cascade = CascadeType.ALL)__ que indica que existe uma relação "um" para "muitos" entre Autor e Livro, e que essa relação já foi mapeada, nesse caso, foi mapeada no Livro sobre o atributo Autor. Sobre o cascade, ele indica que qualquer operação no Autor, essa operação sera refletida em Livro, que nesse caso é a operação de remoção. Segue o código atualizado:
 ```java
-// Autor
-
 @Entity
 public class Autor {
 
@@ -226,6 +212,50 @@ INSERT INTO livro(nome, publicacao, descricao, autor_id) VALUES ('Doctor Who: O 
 
 Chegamos ao fim do passo 1!
 
+### Passo 2: Criação da camada de interfaces de persistência
 
+Após finalizar o passo 1, para podemos ter um CRUD dessas entidades criadas, precisamos criar uma interface para cada entidade, onde essas interfaces extenderam a interface generic _JpaRepository_, que é uma interface do Spring Data JPA que contêm assinaturas de métodos CRUD. Mas como isso funciona internamente???... Essas interfaces ficaram na pasta repository. Segue abaixo as interfaces:
+
+```java
+public interface LivroRepository extends JpaRepository<Livro, Long> {
+}
+```
+
+```java
+public interface AutorRepository extends JpaRepository<Autor, Long> {
+}
+```
+
+### Passo 3: Criação da camada de serviço
+
+Com a finalização do passo 2, precisamos criar as classes de serviços, que vão fica na pasta service. Essas classes são necessárias para ter as regras de negócio do produto, ter serviços propriamente ditos e conectar a camada de repository e resource. Neste primeiro momento, vamos criar apenas um método de recuperar todos os Livros e Autores. Para uma classes ser considerada como serviço, ela precisa ser anotada com __@Service__ que é uma anotação de esteriótipo do Spring. Para que podemos ter acesso a camada repository, precisamos injetar o repository no service, isso feito com a anotação __@Autowired__(atualmente é um mal uso usar essa anotação, existem outros meios para indicar a injeção, mas para um primeiro entendimento do assunto, essa anotação se faz necessária), usada em cima do atributo contendo o tipo do repository. Segue os códigos:
+
+```java
+@Service
+public class LivroService {
+
+    @Autowired
+    private LivroRepository livroRepository;
+
+    public List<Livro> findAll() {
+        return livroRepository.findAll();
+    }
+}
+```
+
+```java
+@Service
+public class AutorService {
+
+    @Autowired
+    private AutorRepository autorRepository;
+
+    public List<Autor> findAll() {
+        return autorRepository.findAll();
+    }
+}
+```
+
+### Passo 4: Criação da camada de endpoints
 
 

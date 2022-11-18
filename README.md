@@ -8,9 +8,12 @@ Após feito a configuração do inicial projeto, é hora de programar! Siga os p
 
 ### Passo 1: Criação da camada das entidades
 
-Primeiramente, vamos criar as classes que iriam ser nossas entidades de banco, que ficaram na pasta entity. Também precisamos criar um enum(usado para um conter um grupo de constantes), que será usado como gênero no Autor. O enum ficará na pasta enumeration, dentro de entity. Abaixo, segue as classes e o enum:
+Primeiramente, vamos criar as classes que iriam ser nossas entidades de banco, que ficaram na pasta entity. Também precisamos criar um enum(usado para um conter um grupo de constantes), que será usado como gênero no Autor. O enum ficará na pasta enumeration, dentro de entity. Nas entidades e enum, precisamos por algumas "anotações", que é uma forma de programação usada bastante em projeto Spring. Vamos usar as anotações @Getter, @Setter e @NoArgsConstructor, que são anotações da lib Lombok, que servem respectvamente para criar os getters, setter e um construtor sem argumentos, isso tudo em tempo de compilação. Abaixo, segue as classes e o enum:
 
 ```java
+@Getter
+@Setter
+@NoArgsConstructor
 public class Livro {
 
     private String nome;
@@ -21,7 +24,6 @@ public class Livro {
 }
 ```
 
-Aqui no enum, nos deparamos com as anotações __@Getter__ e __AllArgsConstructor__ que criam os getters dos atributos do enum e construtor do enum com todos os atributos em tempo de compilação, respectivamente.
 ```java
 @Getter
 @AllArgsConstructor
@@ -49,6 +51,9 @@ public enum Genero {
 ```
 
 ```java
+@Getter
+@Setter
+@NoArgsConstructor
 public class Autor {
 
     private String nome;
@@ -63,11 +68,12 @@ public class Autor {
 }
 ```
 
-Para que essas classes sejam entidades de banco, precisamos "anotar-lá" com __@Entity__(programação com em projetos Spring usam bastante anotações). Além disso, precisamos definir o id dessas classes/entidades, isso para garantir unicidade a nível de banco. Para isso, usamos a anotação __@Id__ em cima de um atributo de classe que deva ser o id, seu nome deve ser id, o tipo, tanto faz(usaremos Long)! Tendo o id, precisamos dizer como ele vai ser gerado, usamos a anotação __@GeneratedValue(strategy = GenerationType.IDENTITY)__, essa anotação quer dizer que a geração do id será feita pelo SGBD em uso. Logo, as classes ficaram da seguinte forma:
+Para que essas classes sejam entidades de banco, precisamos anotar-lá com __@Entity__. Além disso, precisamos definir o id dessas classes/entidades, isso para garantir unicidade a nível de banco. Para isso, usamos a anotação __@Id__ em cima de um atributo de classe que deva ser o id, seu nome deve ser id, o tipo, tanto faz(usaremos Long)! Tendo o id, precisamos dizer como ele vai ser gerado, usamos a anotação __@GeneratedValue(strategy = GenerationType.IDENTITY)__, essa anotação quer dizer que a geração do id será feita pelo SGBD em uso. Logo, as classes ficaram da seguinte forma:
 
 Um livro poderá ter uma descrição muito grande por exemplo, e sem anotação __@Length(max = 9999)__ no atributo descrição, teriamos um exceção que indica que estrapolamos o tamanho padrão da descrição no banco
 ```java
 @Entity
+...
 public class Livro {
     
     @Id 
@@ -86,6 +92,7 @@ public class Livro {
 Em Autor, no genero, precisamos por a anotação @Enumerated(EnumType.STRING), para indicarmos ao Spring Data que sera usado a String do nome do gênero, que são MASCULINO, FEMININO ou OUTRO
 ```java
 @Entity
+...
 public class Autor {
     
     @Id
@@ -132,68 +139,19 @@ Nesse arquivo configuramos o dialéto SQL aceito pelo SGBD, url de acesso, usuá
 Agora precisamos criar o relacionamento entre Livro e Autor. A relação entre Livro e Autor é de muitos para um, isso quer dizer que vários livros podem ser feitos por um autor, apenas um, ou, que um autor faz vários livros. Se você estudou bando de dados bem, saberá que nesse relacionamento, colocamos a referência do "um" nos "muitos", que nesse caso será a referência do autor nos Livros. Fazemos isso da seguinte maneira: colocamos um atributo autor do tipo Autor em Livro e anotamos com __@ManyToOne__, e logo abaixo dessa anotação colocamos __@JoinColumn(name = "autor_id")__. Essas duas anotaçãos formam o relacionamento de muitos para um entre livro e autor, e criará uma coluna com o nome autor_id na relação do Livro no banco, ou seja, estamos transformando uma referência de um objeto em uma foreign key na relação. Segue as classes atualizadas:
 
 ```java
-@Entity
+...
 public class Livro {
-    
-    @Id 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String nome;
-
-    private LocalDate publicacao;
-    
-    @Length(max = 9999)
-    private String descricao;
-    
+    ...
     @ManyToOne
     @JoinColumn(name = "autor_id")
     private Autor autor;
 }
 ```
-
-```java
-@Entity
-public class Autor {
-    
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String nome;
-
-    private String sobrenome;
-
-    private LocalDate dataNascimento;
-    
-    private String email;
-
-    @Enumerated(EnumType.STRING)
-    private Genero genero;
-}
-```
-
 Ainda nessa parte de relacionamento, podemos ter referências dos Livros em um Autor, e isso só faz sentido no mundo orientado a objetos. Precisamos fazer isso pelo seguinte motivo: caso queiramos remover um Autor, os seus Livros precisam ser removidos. Fazemos isso colocando um List de Livro no Autor, e em cima desse atributo, colocamos a anotação __@OneToMany(mappedBy = "autor", cascade = CascadeType.ALL)__ que indica que existe uma relação "um" para "muitos" entre Autor e Livro, e que essa relação já foi mapeada, nesse caso, foi mapeada no Livro sobre o atributo Autor. Sobre o cascade, ele indica que qualquer operação no Autor, essa operação sera refletida em Livro, que nesse caso é a operação de remoção. Segue o código atualizado:
 ```java
-@Entity
+...
 public class Autor {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String nome;
-
-    private String sobrenome;
-
-    private LocalDate dataNascimento;
-
-    @Column(unique = true)
-    private String email;
-
-    @Enumerated(EnumType.STRING)
-    private Genero genero;
-
+    ...
     @OneToMany(mappedBy = "autor", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private List<Livro> livros = new ArrayList<>();
@@ -257,5 +215,57 @@ public class AutorService {
 ```
 
 ### Passo 4: Criação da camada de endpoints
+
+Agora vamos criar uma parte da nossa API, que seguira os padrões REST(estilo arquitetural para APIs com algumas restrições). Relembrando que as classes criadas aqui, ficaram no pacote resource. Vamos criar dois endpoints(links, URLs para algum contéudo diante de alguma operação), que retornaram todos os Livros e Autores cadastrados. Para isso, precisamos criar duas classes que representaram as APIs de Autor e Livro. Ambas as classes precisam ser anotadas com __@RestController__, e depois serem anotadas com __@RequestMapping("/endpoint")__. Essa última anotação indica a parte principal do endpoint, que é passada como String, e nosso caso, vamos usar "/livros" e "/autores". Precisamos injetar os services necessários, isso para realizar alguma operação, como a recuperação de Livros. Feito isso, precisamos criar um método que vai retornar todos os Livros ou Autores, e esse método precisa ser anotado com __@GetMapping__, que indica uma operação de leitura de dados, sem essa anotação, o endpoint não irá funcionar. Segue abaixo os códigos:
+
+```java
+@RestController
+@RequestMapping("/livros")
+public class LivroResource {
+
+    @Autowired
+    private LivroService livroService;
+
+    @GetMapping
+    public List<Livro> findAll() {
+        return livroService.findAll();
+    }
+}
+```
+
+```java
+@RestController
+@RequestMapping("/autores")
+public class AutorResource {
+    
+    @Autowired
+    private AutorService autorService;
+
+    @GetMapping
+    public List<Autor> findAll() {
+        return autorService.findAll();
+    }
+}
+```
+
+Como você viu, aconteceu um erro ao tentar recuperar os Livros e Autores, qual o motivo? Quando recuperamos um Livro, recuperamos todos os seus atributos, inclusive o Autor, e o Autor tem seus atributos e contêm Livros, como pode percerber temos um problema de referência cíclcica, e resolvemos isso com a anotação __@JsonIgnore__. Vamos por essa anotação em cima do atributo Autor em Livro, e em cima do atributo Livros em Autor. Segue os códigos:
+
+```java
+...
+public class Livro {
+    ...
+    @JsonIgnore
+    private Autor autor;
+}
+```
+
+```java
+...
+public class Autor {
+    ...
+    @JsonIgnore
+    private List<Livro> livros = new ArrayList<>();
+}
+```
 
 

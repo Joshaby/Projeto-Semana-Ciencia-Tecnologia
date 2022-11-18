@@ -8,7 +8,7 @@ Após feito a configuração do inicial projeto, é hora de programar! Siga os p
 
 ### Passo 1: Criação da camada das entidades
 
-Primeiramente, vamos criar as classes que iriam ser nossas entidades de banco, que ficaram na pasta entity. Também precisamos criar um enum(usado para um conter um grupo de constantes), que será usado como gênero no Autor. O enum ficará na pasta enumeration, dentro de entity. Nas entidades e enum, precisamos por algumas "anotações", que é uma forma de programação usada bastante em projeto Spring. Vamos usar as anotações @Getter, @Setter e @NoArgsConstructor, que são anotações da lib Lombok, que servem respectvamente para criar os getters, setter e um construtor sem argumentos, isso tudo em tempo de compilação. Abaixo, segue as classes e o enum:
+Primeiramente, vamos criar as classes que iriam ser nossas entidades de banco, que ficaram na pasta entity. Também precisamos criar um enum(usado para um conter um grupo de constantes), que será usado como gênero no Autor. O enum ficará na pasta enumeration, dentro de entity. Nas entidades e enum, precisamos por algumas "anotações", que é uma forma de programação usada bastante em projeto Spring. Vamos usar as anotações __@Getter__, __@Setter__ e __@NoArgsConstructor__, que são anotações da lib Lombok, que servem respectvamente para criar os getters, setter e um construtor sem argumentos, isso tudo em tempo de compilação. Abaixo, segue as classes e o enum:
 
 ```java
 @Getter
@@ -216,7 +216,7 @@ public class AutorService {
 
 ### Passo 4: Criação da camada de endpoints
 
-Agora vamos criar uma parte da nossa API, que seguira os padrões REST(estilo arquitetural para APIs com algumas restrições). Relembrando que as classes criadas aqui, ficaram no pacote resource. Vamos criar dois endpoints(links, URLs para algum contéudo diante de alguma operação), que retornaram todos os Livros e Autores cadastrados. Para isso, precisamos criar duas classes que representaram as APIs de Autor e Livro. Ambas as classes precisam ser anotadas com __@RestController__, e depois serem anotadas com __@RequestMapping("/endpoint")__. Essa última anotação indica a parte principal do endpoint, que é passada como String, e nosso caso, vamos usar "/livros" e "/autores". Precisamos injetar os services necessários, isso para realizar alguma operação, como a recuperação de Livros. Feito isso, precisamos criar um método que vai retornar todos os Livros ou Autores, e esse método precisa ser anotado com __@GetMapping__, que indica uma operação de leitura de dados, sem essa anotação, o endpoint não irá funcionar. Segue abaixo os códigos:
+Agora vamos criar uma parte da nossa API, que seguira os padrões REST(estilo arquitetural para APIs com algumas restrições). Relembrando que as classes criadas aqui, ficaram no pacote resource. Vamos criar dois endpoints(links, URLs para algum contéudo diante de algum método HTTP), que retornaram todos os Livros e Autores cadastrados. Para isso, precisamos criar duas classes que representaram as APIs de Autor e Livro. Ambas as classes precisam ser anotadas com __@RestController__, e depois serem anotadas com __@RequestMapping("/endpoint")__. Essa última anotação indica a parte principal do endpoint, que é passada como String, e nosso caso é "/livros" e "/autores". Precisamos injetar os services necessários, isso para realizar alguma operação, como a recuperação de Livros. Feito isso, precisamos criar métodos que vão retornar todos os Livros e Autores, e esses métodos precisam ser anotados com __@GetMapping__, que indica que endpoint será acessado com o método HTTP GET, que é usado na operação de leitura, recuperação de dados. Sem essa anotação, o endpoint não irá funcionar. Segue abaixo os códigos:
 
 ```java
 @RestController
@@ -268,4 +268,53 @@ public class Autor {
 }
 ```
 
+### Passo 5: Recuperação de Livro e Autor por ID
 
+Agora, vamos recuperar Livro e Autor por um ID, um identificador único. Para isso, vamos precisar editar os services de Autor e Livro, adicionando os métodos de recuperação. E nos resouces, vamos adicionar os endpoints para essa funcionalidade. Segue os códigos dos service:
+
+Caso não exista um Livro ou Autor com ID passado pelo usuário, será jogada uma RuntimeException. Tratamento de exceções será abordado mais na frente
+```java
+...
+public class LivroService {
+    ...
+    public Livro find(Long id) {
+        return livroRepository.findById(id).orElseThrow(RuntimeException::new);
+    }
+}
+```
+
+```java
+...
+public class AutorService {
+    ...
+    public Autor find(Long id) {
+        return autorRepository.findById(id).orElseThrow(RuntimeException::new);
+    }
+}
+```
+
+Agora vamos criar os endpoints. O endpoints seram /livros/{id} e /autores/{id}. A anotação __@PathVariable__ irá pegar o id passado no link e por no parâmetro id do método.
+
+```java
+...
+public class LivroResource {
+    ...
+    @GetMapping("/{id}")
+    public Livro find(@PathVariable Long id) {
+        return livroService.find(id);
+    }
+}
+```
+
+```java
+...
+public class AutorResource {
+    ...
+    @GetMapping("/{id}")
+    public Autor find(@PathVariable Long id) {
+        return autorService.find(id);
+    }
+}
+```
+
+Aqui pode haver uma complicação no entendimento desses endpoints. Quando anotamos a classes, definimos o endpoint base para os outros endpoints dessa classe, que ficam nos métodos. Por exemplo, no LivroResource, definimos o endpoint base como "/livros", qualquer novos endpoints definido na classe, usará esse "/livros" para compor seu endpoint, como ocorreu no método find() que contêm o endpoint "/livros/{id}"

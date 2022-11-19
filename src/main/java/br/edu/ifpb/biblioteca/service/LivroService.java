@@ -3,7 +3,9 @@ package br.edu.ifpb.biblioteca.service;
 import br.edu.ifpb.biblioteca.dto.LivroDTO;
 import br.edu.ifpb.biblioteca.entity.Autor;
 import br.edu.ifpb.biblioteca.entity.Livro;
+import br.edu.ifpb.biblioteca.repository.AutorRepository;
 import br.edu.ifpb.biblioteca.repository.LivroRepository;
+import br.edu.ifpb.biblioteca.service.exception.AutorException;
 import br.edu.ifpb.biblioteca.service.exception.LivroException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,8 @@ public class LivroService {
 
     private final LivroRepository livroRepository;
 
+    private final AutorRepository autorRepository;
+
     private final AutorService autorService;
 
     private final EmailService emailService;
@@ -23,6 +27,12 @@ public class LivroService {
     public Livro find(Long id) {
         return livroRepository.findById(id).orElseThrow(
                 () -> new LivroException(String.format("Não existe livro com Id %d.", id)));
+    }
+
+    public List<Livro> findByAutor(Long id) {
+        Autor autor = autorRepository.findById(id).orElseThrow(
+                () -> new AutorException(String.format("Não existe autor com Id %d", id)));
+        return livroRepository.findByAutor(autor);
     }
 
     public void delete(Long id) {

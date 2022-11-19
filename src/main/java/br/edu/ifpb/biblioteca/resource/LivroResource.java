@@ -45,7 +45,8 @@ public class LivroResource {
     }
 
     @GetMapping
-    public List<Livro> findAll() {
-        return livroService.findAll();
+    public List<Livro> findAll(@RequestParam(value = "autor_id", defaultValue = "") String id) {
+        if (id.isEmpty()) return livroService.findAll();
+        else return livroService.findByAutor(Long.valueOf(id));
     }
 }

@@ -293,7 +293,7 @@ public class AutorService {
 }
 ```
 
-Agora vamos criar os endpoints. O endpoints seram /livros/{id} e /autores/{id}. A anotação __@PathVariable__ irá pegar o id passado no link e por no parâmetro id do método.
+Agora vamos criar os endpoints. Precisamos anotar os métodos dos endpoints com __@GetMapping("/{id}")__, isso indica que vamos usar o método HTTP GET, e que no endpoint será passado o id do Autor ou Livro, isso é representado por "/{id}". O {id} representa qualquer valor numérico. Os endpoints completos desse métodos seram /livros/{id} e /autores/{id}. A anotação __@PathVariable__ irá pegar o id passado no link e por no parâmetro id do método.
 
 ```java
 ...
@@ -316,5 +316,3 @@ public class AutorResource {
     }
 }
 ```
-
-Aqui pode haver uma complicação no entendimento desses endpoints. Quando anotamos a classes, definimos o endpoint base para os outros endpoints dessa classe, que ficam nos métodos. Por exemplo, no LivroResource, definimos o endpoint base como "/livros", qualquer novos endpoints definido na classe, usará esse "/livros" para compor seu endpoint, como ocorreu no método find() que contêm o endpoint "/livros/{id}"

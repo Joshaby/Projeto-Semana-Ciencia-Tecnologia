@@ -615,7 +615,7 @@ spring:
             enable: true
             
 default:
-  sender: # Sua senha
+  sender: # Seu email
 ```
 
 Vamos usar o email criado para testes, email: biblioteca.teste.2022@gmail.com e a senha: biblioteca1029@. Caso queria usar seu email pessoal, você precisa permitir o uso dele em aplicações que não sejam Google, e você faz isso por esses dois links https://www.google.com/settings/security/lesssecureapps e https://accounts.google.com/b/0/DisplayUnlockCaptcha.

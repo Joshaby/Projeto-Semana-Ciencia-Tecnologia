@@ -3,7 +3,10 @@ package br.edu.ifpb.biblioteca.resource;
 import br.edu.ifpb.biblioteca.dto.LivroDTO;
 import br.edu.ifpb.biblioteca.entity.Livro;
 import br.edu.ifpb.biblioteca.service.LivroService;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +18,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/livros")
 @RequiredArgsConstructor
+@Tag(name = "Livro Resource", description = "CRUD para Livros")
 public class LivroResource {
 
     private final LivroService livroService;
 
     @GetMapping("/{id}")
+    @Operation(description = "Buscar um Livro por ID")
     public Livro find(@PathVariable Long id) {
         return livroService.find(id);
     }

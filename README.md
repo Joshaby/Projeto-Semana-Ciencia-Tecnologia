@@ -168,8 +168,6 @@ INSERT INTO livro(nome, publicacao, descricao, autor_id) VALUES ('Doctor Who: Lo
 INSERT INTO livro(nome, publicacao, descricao, autor_id) VALUES ('Doctor Who: O fim dos tempos', '2022-01-13', 'Lorem ipsum dolor sit amet. Ut ipsum ratione quo itaque deserunt et cumque delectus 33 autem quas et perspiciatis assumenda. Ut aliquam mollitia 33 quia provident et magnam earum 33 nesciunt nostrum et velit consectetur aut galisum dolore qui sunt asperiores. At iste magnam aut modi doloribus sed expedita pariatur. Aut deleniti sint ex voluptas velit sit incidunt expedita.', 2);
 ```
 
-Chegamos ao fim do passo 1!
-
 ### Passo 2: Criação da camada de interfaces de persistência
 
 Após finalizar o passo 1, para podemos ter um CRUD dessas entidades criadas, precisamos criar uma interface para cada entidade, onde essas interfaces extenderam a interface generic _JpaRepository_, que é uma interface do Spring Data JPA que contêm assinaturas de métodos CRUD. Mas como isso funciona internamente???... Essas interfaces ficaram na pasta repository. Segue abaixo as interfaces:
@@ -319,7 +317,7 @@ public class AutorResource {
 
 ### Passo 5: Inserção de Livro e Autor
 
-Agora vamos aprender como inserir um Livro e Autor. Primeiramente, só podemos inserir um Livro caso o Autor desse Livro exista, isso na lógica do software é claro, mas na prática, por enquanto não o mesmo. Precisamos criar DTOs, DTOs vão representar os dados passado pelo usuário, esses dados inicialmente são passados como JSON, mas seram convertidos em objetos assim que o back receber a requisição do usuário. Para isso, precisamos criar a pasta dto e dentro dela, criar o LivroDTO e AutorDTO. Segue os códidos:
+Agora vamos aprender como inserir um Livro e Autor. Precisamos criar DTOs, DTOs vão representar os dados passado pelo usuário nas requisições, esses dados inicialmente são passados como JSON, mas seram convertidos em objetos assim que o back receber os dados do usuário. Para isso, precisamos criar a pasta dto e dentro dela, criar o LivroDTO e AutorDTO. Segue os códidos:
 
 ```java
 @Getter
@@ -416,7 +414,7 @@ public class AutorService {
 }
 ```
 
-Nos resources, usaremos o método HTTP POST com a anotação __@PostMapping__, que indica que vamos inserir um novo dado no back. A anotação __@ResponseStatus(HttpStatus.CREATED)__ indica o status HTTP do retorno da requisição, que nesse caso é 201, que mostra que algo foi criado. O retorno da requisição não possuí corpo, mas possuí o status como falado e, um endpoint de acesso do novo Livro ou Autor adicionado, esse endpoint se encontra no cabeçalho do retorno. A anotação __@RequesBody__ "converterar" o JSON no DTO correspondente. Logo, teremos:
+Nos resources, usaremos o método HTTP POST com a anotação __@PostMapping__, que indica que vamos inserir um novo dado no back. A anotação __@ResponseStatus(HttpStatus.CREATED)__ indica o status HTTP do retorno da requisição, que nesse caso é 201, que mostra que algo foi criado. O retorno da requisição não possuí corpo, mas possuí o status como falado e, um endpoint de acesso do novo Livro ou Autor adicionado ao cabeçalho da resposta. A anotação __@RequesBody__ "converterar" o JSON no DTO correspondente. Logo, teremos:
 
 ```java
 ...
@@ -680,13 +678,268 @@ public class LivroService {
         emailService.sendEmail(autor.getEmail(), text);
         return livroRepository.save(livro);
     }
+    ...
+    private String prepareMailText(String autor, String livro) {
+        return String.format("Olá %s! Informamos que o seu livro \"%s\" foi adicionado a biblioteca!", autor, livro);
+    }
 }
 ```
 
-Antes de enviar os emails, mudem os emails dos Autores no `import.sql`, de preferência, coloque seu email pessoal
+Antes de enviar os emails, mudem os emails dos Autores no `import.sql`, de preferência, coloque seu email pessoal.
 
 ## Extras
 
-### Extra 1: Validação de requisições
+### Extra 1: Validação
+
+Em aplicações robustas, sempre é necessário ter validações de dados, principalmente vindas de usuários finais. Nessa seção, vamos aprender a realizar validações
+
+#### Parte 1: Validação de busca de Autor e Livro
+
+Precisamos criar as exceções, caso você não tenha estudado exceções, entenda que elas são erros imprevistos, ou seja, não existe a certeza que ele irá ocorrer, mesmo que você achando que pode ocorrer. No Java, as exceções são representadas como objetos, e partir deles você pode saber a causa e outras coisas. Primeiramente, vamos criar as exceções LivroException e AutorException, elas ficaram na pasta exception dentro da pasta service.
+
+```java
+public class LivroException extends RuntimeException {
+
+    public LivroException(String message) {
+        super(message);
+    }
+
+    public LivroException(String message, Throwable throwable) {
+        super(message, throwable);
+    }
+}
+```
+
+```java
+public class AutorException extends RuntimeException {
+
+    public AutorException(String message) {
+        super(message);
+    }
+
+    public AutorException(String message, Throwable throwable) {
+        super(message, throwable);
+    }
+}
+```
+
+Se vocês se lembrarem, os service contêm alguns throws de RuntimeException, vamos fazer uma troca para as exceções devidas.
+
+```java
+...
+public class LivroService {
+    ...
+    public Livro find(Long id) {
+        return livroRepository.findById(id).orElseThrow(
+                () -> new LivroException(String.format("Não existe livro com Id %d.", id)));
+    }
+    public List<Livro> findByAutor(Long id) {
+        Autor autor = autorRepository.findById(id).orElseThrow(
+                () -> new AutorException(String.format("Não existe autor com Id %d", id)));
+        return livroRepository.findByAutor(autor);
+    }
+}
+```
+
+```java
+...
+public class AutorService {
+    ...
+    public Autor find(Long id) {
+        return autorRepository.findById(id).orElseThrow(
+                () -> new AutorException(String.format("Não existe autor com Id %d.", id)));
+    }
+}
+```
+
+Lançamento de exceções feito, mas, como que essas mensagens serão mostradas ao usuário? Precisamos fazer um handler de exceções. Fazemos isso na camada de resource, nele criamos mais uma pasta exception e nessa pasta criamos uma classe com a anotação __@RestControllerAdvice__. Dentro dessa classe, criámos métodos responsáveis por cada exceção lançada pela aplicação, anotamos os métodos com __@ExceptionHandler__ e nessa anotação passamos como parâmetro as exceções que queremos tratar ou validar. Mas antes disso, precisamos criar algumas classes que guardaram informações sobre as exceções, essas classes também ficaram na pasta exception no resource. As classes são:
+
+```java
+@Getter
+@Setter
+@AllArgsConstructor
+public class StandartError {
+
+    private Integer status;
+
+    private String message;
+    
+    private Long time;
+}
+```
+
+```java
+@Getter
+@Setter
+@AllArgsConstructor
+public class FieldMessage {
+
+    private String field;
+
+    private String message;
+}
+```
+
+```java
+@Getter
+@Setter
+public class ValidationError extends StandartError {
+
+    private List<FieldMessage> errors = new ArrayList<>();
+
+    public ValidationError(Integer status, String message, Long time) {
+        super(status, message, time);
+    }
+
+    public void addError(String field, String message) {
+        errors.add(new FieldMessage(field, message));
+    }
+}
+```
+
+A classe anotada com __@RestControllerAdvice__ será a ResourceExceptionHandler.
+
+O status code retornado pelo autorLivroException precisa ser o Not Found 404, que indica que algo não foi achado.
+
+```java
+@RestControllerAdvice
+public class ResourceExceptionHandler {
+    
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler({AutorException.class, LivroException.class})
+    public StandartError autorLivroNotFound(RuntimeException exception) {
+        return new StandartError(HttpStatus.NOT_FOUND.value(), exception.getMessage(), System.currentTimeMillis());
+    }
+}
+```
+
+#### Parte 2: Validação de requisições
+
+Nessa parte, vamos aprender a como validar requisções de usuários.
+
+Precisamos adicionar uma nova dependência no projeto, que é `implementation 'org.springframework.boot:spring-boot-starter-validation'` e colocamos isso no dependencies no build.gradle da seguinte forma:
+
+```groovy
+dependencies {
+	...
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	...
+}
+```
+
+Como os JSONs dos usuários serão "transformados" nos DTOs, precisamos por algumas anotações. Aqui segue o AutorDTO com algumas anotações de validação
+
+```java
+...
+public class AutorDTO {
+
+    @Length(min = 4, max = 10, message = "Informa um nome de no mínimo 4 letras e 10 letras")
+    private String nome;
+
+    @Length(min = 6, max = 12, message = "Informa um sobrenome de no mínimo 4 letras e 10 letras")
+    private String sobrenome;
+
+    private LocalDate dataNascimento;
+
+    @Email(message = "Informa um email válido")
+    private String email;
+
+    private Integer genero;
+}
+```
+
+Feito isso, no ResourceExceptionHandler, precisamos criar um método que trate a exceção MethodArgumentNotValidException, essa é a exceção que é jogada quando alguma validação falha. O método precisa ser assinado com __@ResponseStatus(HttpStatus.BAD_REQUEST)__ que indica que o back não pode processar a requisição por algum erro
+
+```java
+...
+public class ResourceExceptionHandler {
+    ...
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ValidationError dataValidation(MethodArgumentNotValidException exception) {
+        ValidationError error = new ValidationError(
+                HttpStatus.BAD_REQUEST.value(), "Erro de validação", System.currentTimeMillis());
+        for (FieldError fieldError : exception.getFieldErrors()) {
+            error.addError(fieldError.getField(), fieldError.getDefaultMessage());
+        }
+        return error;
+    }
+}
+```
+
+Além disso, precisamos por a anotação __@Valid__ antes de um __@RequestBody__ em um método do resource para iniciar a validação. Vamos editar o método insert no AutorResource.
+
+```java
+...
+public class AutorResource {
+    ...
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public void insert(@Valid @RequestBody AutorDTO dto, HttpServletResponse response) {
+        Autor autor = autorService.insert(dto);
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{id}").buildAndExpand(autor.getId()).toUri();
+        response.addHeader("location", uri.toString());
+    }
+}
+```
+
+Desafio: Anote o LivroDTO para que os seus atributos sejam validados, se quiser, tente aprimorar as validações do AutorDTO
 
 ### Extra 2: Documentação com Swagger UI
+
+Na parte de documentação, vamos usar o Swagger UI, que é uma ferramenta que cria uma paǵina web contendo informações, documentações sobre as APIs REST disponíveis no nosso projeto. Essa documentação é baseada na especificação OpenAPI/Swagger.
+
+Para iniciarmos, precisamos por uma nova dependência no projeto. No `build.gradle` em dependencies, precisamos adicionar `implementation 'org.springdoc:springdoc-openapi-ui:1.6.13'`.
+
+```groovy
+dependencies {
+    ...
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.13'
+    ...
+}
+```
+
+Após isso, no `application.yml` precisamos fazer a configuração de acesso e construção da documentação. Fazemos isso da seguinte maneira:
+
+```yaml
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+
+  api-docs:
+    path: /openapi/v3/api-docs
+
+  packages-to-scan: br.edu.ifpb.biblioteca
+
+  paths-to-match: /**
+```
+
+Feito isso, já podemos acessar o link http://localhost:8080/openapi/swagger-ui/index.html e ver a documentação.
+
+Podemos deixar a documentação mais bonita, com mais informações. Vamos usar o LivroResource para isso.
+
+No LivroResource, vamos anotá-lo com __@Tag(name = "Livro Resource", description = "CRUD para Livros")__, essa anotação coloca um título e descrição na seção livro-resource na documentação.
+
+```java
+...
+@Tag(name = "Livro Resource", description = "CRUD para Livros")
+public class LivroResource {
+    ...
+}
+```
+
+Nos endpoints, podemos colocar descrições. Para fazer isso, basta anotar um método com __@Operation(description = "")__. Um exemplo no LivroResource:
+
+```java
+...
+public class LivroResource {
+    ...
+    @GetMapping("/{id}")
+    @Operation(description = "Buscar um Livro por ID")
+    public Livro find(@PathVariable Long id) {
+        return livroService.find(id);
+    }
+}
+```
+
+Desafio: Fazer as mesmas modificações de LivroResource em AutorResource.

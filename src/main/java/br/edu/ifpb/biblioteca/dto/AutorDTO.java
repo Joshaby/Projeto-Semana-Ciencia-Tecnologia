@@ -1,6 +1,6 @@
 package br.edu.ifpb.biblioteca.dto;
 
-import jakarta.validation.constraints.Email;
+import javax.validation.constraints.Email;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

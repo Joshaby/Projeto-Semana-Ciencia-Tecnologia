@@ -35,4 +35,14 @@ spring:
 
 default:
   sender: jose.azevedo@academico.ifpb.edu.br
-# jakarta.net.ssl.MailSSLSocketFactory
+
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+
+  api-docs:
+    path: /openapi/v3/api-docs
+
+  packages-to-scan: br.edu.ifpb.biblioteca
+
+  paths-to-match: /**

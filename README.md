@@ -170,8 +170,7 @@ INSERT INTO livro(nome, publicacao, descricao, autor_id) VALUES ('Doctor Who: O 
 
 ### Passo 2: Criação da camada de interfaces de persistência
 
-Após finalizar o passo 1, para podemos ter um CRUD dessas entidades criadas, precisamos criar uma interface para cada entidade, onde essas interfaces extenderam a interface generic _JpaRepository_, que é uma interface do Spring Data JPA que contêm assinaturas de métodos CRUD. Mas como isso funciona internamente???... Essas interfaces ficaram na pasta repository. Segue abaixo as interfaces:
-
+Após finalizar o passo 1, para podemos ter acesso ao banco, precisamos criar interfaces repository para cada entidade, onde cada interface dessa ficará responsável por acessar uma tabela correspondente a entidade. As interfaces precisam extender a interface generic _JpaRepository_, que contém assinatura de métodos CRUD. Mas como isso funciona? A partir das interfaces criadas para cada entidade, o Spring Data criará queries de acesso ao banco, que ficarám armazenadas em um objeto. Segue abaixo as interfaces:
 ```java
 public interface LivroRepository extends JpaRepository<Livro, Long> {
 }
@@ -315,7 +314,7 @@ public class AutorResource {
 }
 ```
 
-### Passo 5: Inserção de Livro e Autor
+### Passo 6: Inserção de Livro e Autor
 
 Agora vamos aprender como inserir um Livro e Autor. Precisamos criar DTOs, DTOs vão representar os dados passado pelo usuário nas requisições, esses dados inicialmente são passados como JSON, mas seram convertidos em objetos assim que o back receber os dados do usuário. Para isso, precisamos criar a pasta dto e dentro dela, criar o LivroDTO e AutorDTO. Segue os códidos:
 
@@ -444,7 +443,7 @@ public class AutorResource {
 }
 ```
 
-### Passo 6: Remoção de Livro e Autor
+### Passo 7: Remoção de Livro e Autor
 
 Agora vamos implementar a remoção de Livro e Autor. Nos services, antes de fazer a remoção, precisamos saber se existe algum Livro ou Autor com o ID passado, caso não exista, será lançada uma exceção.
 
@@ -496,7 +495,7 @@ public class AutorResource {
 }
 ```
 
-### Passo 7: Atualização de Livro e Autor
+### Passo 8: Atualização de Livro e Autor
 
 Nesse passo, vamos aprender a como atualizar um Livro ou Autor. Antes de começar, precisamos saber de uma característica falha dessa forma de atualização. Caso queiramos atualizar um Livro por exemplo, precisamos ter em um JSON contendo todas a informações desse Livro, e atualizar a informação de desejo e persistir, sem isso, o Livro perderá algumas informações. Na atualização, vamos precisar dos DTOs como na inserção que foi feita anteriormente. Na camada de service, precisamos fazer:
 
@@ -550,7 +549,7 @@ public class AutorResource {
 }
 ```
 
-### Passo 8: Busca de Livros por ID de Autor
+### Passo 9: Busca de Livros por ID de Autor
 
 Basicamente terminamos o CRUD de Livro e Autor, mas, ficou faltando uma coisa, a buscas de Livros por ID de algum Autor. Vamos começar pelo repository do Livro. O JpaRepository como comentando anteriormente, faz mágias mirabolantes com acesso ao banco, mas, existe uma outra coisa legal. Seguindo um certo padrão, podemos assinar métodos em uma interface que extende o JpaRepository, e esse método virar uma query. Veja abaixo:
 
@@ -588,7 +587,7 @@ public class LivroResource {
 }
 ```
 
-### Passo 9: Envio de email de confirmação de inserção de Livro
+### Passo 10: Envio de email de confirmação de inserção de Livro
 
 Uma funcionalidade dessa aplicação, é o envio de um email para o Autor dizendo que o Livro foi adicionado a biblioteca. Primeiramente, vamos usar o SMTP do Google para fazer o envio, e precisamos configurar isso no `applicatiom.yml` como mostrado abaixo.
 
